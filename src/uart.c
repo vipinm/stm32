@@ -33,7 +33,7 @@ void uart_init(void)
     REG_SET(AFIO->afio_evcr, data);*/
 
 
-    data = (8000000/9600);
+    data = (8000000/115200);
     REG_SET(USART1->usart_brr, data); /* (72000000U / 9600U ); BR 9600 bits/s */
 
     data = REG_GET(USART1->usart_cr1);
@@ -51,11 +51,20 @@ void uart_init(void)
 
 }
 
-void uart_tx(unsigned char *t)
+void uart_tx(char *t)
 {
-    REG_SET(USART1->usart_sr, 0);
-    /*while(!(REG_GET(USART1->usart_sr) & (1 << 7)));*/
-    USART1->usart_dr = *t;
+    //REG_SET(USART1->usart_sr, 0);
+    {
+/*
+	if(*t == '\n')
+	{
+            while(!(REG_GET(USART1->usart_sr) & (1 << 6))) {};
+            USART1->usart_dr = '\r';
+        }*/
+        while(!(REG_GET(USART1->usart_sr) & (1 << 6))) {};
+        USART1->usart_dr = *t;
 
-    while(!(REG_GET(USART1->usart_sr) & (1 << 6)));
+	t++;
+    }
+
 }

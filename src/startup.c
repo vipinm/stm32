@@ -1,4 +1,5 @@
 
+#include<stdio.h>
 #include<stdint.h>
 
 /* stm32f103c8t6 sram:20kb flash:64kb */
@@ -11,11 +12,14 @@
 extern uint32_t _etext;
 extern uint32_t _sdata;
 extern uint32_t _edata;
+extern uint32_t _la_data;
 
-extern uint32_t _sbss;
-extern uint32_t _ebss;
+extern uint32_t __bss_start__;
+extern uint32_t __bss_end__;
 
 int main(void);
+void __libc_init_array(void);
+
 void Reset_Handler(void);
 
 void NMI_Handler 				(void) __attribute__ ((weak, alias("Default_Handler")));
@@ -204,7 +208,7 @@ void Reset_Handler(void)
 	uint32_t size = (uint32_t)&_edata - (uint32_t)&_sdata;
 	
 	uint8_t *pDst = (uint8_t*)&_sdata; //sram
-	uint8_t *pSrc = (uint8_t*)&_etext; //flash
+	uint8_t *pSrc = (uint8_t*)&_la_data; //flash
 	
 	for(uint32_t i =0 ; i < size ; i++)
 	{
@@ -212,13 +216,13 @@ void Reset_Handler(void)
 	}
 	
 	//Init. the .bss section to zero in SRAM
-	size = (uint32_t)&_ebss - (uint32_t)&_sbss;
-	pDst = (uint8_t*)&_sbss;
+	size = (uint32_t)&__bss_end__ - (uint32_t)&__bss_start__;
+	pDst = (uint8_t*)&__bss_start__;
 	for(uint32_t i =0 ; i < size ; i++)
 	{
 		*pDst++ = 0;
 	}
-
+        __libc_init_array();
         main();
 }
 

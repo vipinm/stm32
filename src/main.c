@@ -10,12 +10,10 @@ int main(void)
 {
     rcc_init();
     uart_init();
-    uart_tx("S");
-    uart_tx("H");
-    uart_tx("I");
-    uart_tx("V");
-    uart_tx("A");
-    uart_tx("\n");
+    printf("SHIVA \r\n");
+    printf("TEJAS \r\n");
+    printf("Hello Test %s \r\n", __DATE__);
+    printf("************* \r\n");
     led_init();
     for(;;);
 }

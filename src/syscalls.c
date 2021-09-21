@@ -56,12 +56,12 @@
 #include <time.h>
 #include <sys/time.h>
 #include <sys/times.h>
+#include "uart.h"
+#include "reg.h"
 
 /* Variables */
 //#undef errno
 extern int errno;
-extern int __io_putchar(int ch) __attribute__((weak));
-extern int __io_getchar(void) __attribute__((weak));
 
 register char * stack_ptr asm("sp");
 
@@ -82,7 +82,7 @@ int _getpid(void)
 
 int _kill(int pid, int sig)
 {
-	errno = EINVAL;
+	//errno = EINVAL;
 	return -1;
 }
 
@@ -98,23 +98,33 @@ __attribute__((weak)) int _read(int file, char *ptr, int len)
 
 	for (DataIdx = 0; DataIdx < len; DataIdx++)
 	{
-		*ptr++ = __io_getchar();
+	/*	*ptr++ = __io_getchar();*/
 	}
 
 return len;
 }
 
+int _write( int handle, char* data, int size ) {
+  int count = size;
+  while( count-- ) {
+      while(!(REG_GET(USART1->usart_sr) & (1 << 6))) {};
+        USART1->usart_dr = *data++;
+  }
+  return size;
+}
+/*
 __attribute__((weak)) int _write(int file, char *ptr, int len)
 {
 	int DataIdx;
 
 	for (DataIdx = 0; DataIdx < len; DataIdx++)
 	{
-		__io_putchar(*ptr++);
-		//ITM_SendChar(*ptr++);
+            //uart_tx("Test\n");
+	    uart_tx(ptr);
+	    ptr++;
 	}
 	return len;
-}
+}*/
 
 int _close(int file)
 {
@@ -146,13 +156,13 @@ int _open(char *path, int flags, ...)
 
 int _wait(int *status)
 {
-	errno = ECHILD;
+	//errno = ECHILD;
 	return -1;
 }
 
 int _unlink(char *name)
 {
-	errno = ENOENT;
+	//errno = ENOENT;
 	return -1;
 }
 
@@ -169,19 +179,19 @@ int _stat(char *file, struct stat *st)
 
 int _link(char *old, char *new)
 {
-	errno = EMLINK;
+	//errno = EMLINK;
 	return -1;
 }
 
 int _fork(void)
 {
-	errno = EAGAIN;
+	//errno = EAGAIN;
 	return -1;
 }
 
 int _execve(char *name, char **argv, char **env)
 {
-	errno = ENOMEM;
+	//errno = ENOMEM;
 	return -1;
 }
 
@@ -203,7 +213,7 @@ caddr_t _sbrk(int incr)
 	prev_heap_end = heap_end;
 	if (heap_end + incr > stack_ptr)
 	{
-		errno = ENOMEM;
+		//errno = ENOMEM;
 		return (caddr_t) -1;
 	}
 

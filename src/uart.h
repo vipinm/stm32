@@ -43,6 +43,6 @@
 
 void uart_init(void);
 
-void uart_tx(unsigned char *t);
+void uart_tx(char *t);
 
 #endif
