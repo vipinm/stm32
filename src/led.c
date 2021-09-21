@@ -15,7 +15,6 @@ void led_init(void)
     data &= (~(3 << 18));
     data |= (1 << 16);
     data = REG_SET(GPIOB->gpio_crh, data);
-
     while(1)
     {
         REG(GPIOB_ODR) ^= (1 << 12);
