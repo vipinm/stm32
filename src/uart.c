@@ -14,41 +14,34 @@
 
 void uart_init(void)
 {
-    /* PA9 TX: alternate function push-pull , 
-       PA10 RX: input floating/input pull-up  */
-    uint32_t data = 0;
+    GPIOA->CRH = 0x00000000;
+    GPIOA->CRH |= (2 << 4) | (2 << 6); /* PA9 TX Alternating function output*/
+    GPIOA->CRH |= (1 << 10); /* PA10 Floating input */
+ #if 0
+    GPIOA->CRL = 0x00000000;
+    GPIOA->CRL |= (1 << 8) | (2 << 10); /* PA2 TX Alternating function output*/
+    GPIOA->CRL |= (1 << 14); /* PA3 Floating input */ 
+#endif
 
-    /* PA9 output mode */
-    /* PA9 output mode */
-    /* PA9  alt function push-pull */
-    /* PA10 input mode*/
-    /* PA10 alternate function push-pull */
-    data = REG_GET(GPIOA->gpio_crh);
-    data &= (~(0xff << 4));
-    data |= ((3 << 4)| (2 << 6) | (1 << 10));
-    REG_SET(GPIOA->gpio_crh, data);
-/*
-    data = REG_GET(AFIO->afio_evcr);
-    data = 0xa;
-    REG_SET(AFIO->afio_evcr, data);*/
+    USART1->BRR = (8000000/9600); /* BR 115200 */
+ #if 0
+    USART2->BRR = (8000000/9600); /* BR 115200 */
+#endif
 
-
-    data = (8000000/115200);
-    REG_SET(USART1->usart_brr, data); /* (72000000U / 9600U ); BR 9600 bits/s */
-
-    data = REG_GET(USART1->usart_cr1);
     /* USART enable */
     /* 1 start bit 8 Data bits , n stop bit */
     /* USART Tx enable */
     /* USART Rx enable */
-    data = ((1 << 13)| (1 << 3) | (1 << 2));
-    data &= (~( 1 << 12));
-    REG_SET(USART1->usart_cr1, data);
-
-    data = REG_GET(USART1->usart_cr2);
-    data |= (1 << 11);
-    REG_SET(USART1->usart_cr2, data);
-
+    USART1->CR1 = 0x00000000;
+    USART1->CR2 = 0x00000000;
+    USART1->CR1 |= ((1 << 13) | (1 << 3) | (1 << 2));
+    USART1->CR2 |= (1 << 11);/*CLKEN */
+ #if 0
+    USART2->CR1 = 0x00000000;
+    USART2->CR2 = 0x00000000;
+    USART2->CR1 |= ((1 << 13) | (1 << 3) | (1 << 2));
+    USART2->CR2 |= (1 << 11);/*CLKEN */
+#endif
 }
 
 void uart_tx(char *t)
@@ -61,10 +54,30 @@ void uart_tx(char *t)
             while(!(REG_GET(USART1->usart_sr) & (1 << 6))) {};
             USART1->usart_dr = '\r';
         }*/
-        while(!(REG_GET(USART1->usart_sr) & (1 << 6))) {};
-        USART1->usart_dr = *t;
-
+        while(!(USART1->SR & (1 << 6))) {};
+        USART1->DR = *t;
 	t++;
     }
 
+}
+char uart_rx(void)
+{
+	char t = '\0';
+	while(!(USART1->SR & (1<<5))){};
+	t = USART1->DR;
+	printf("%c \r\n ", t);
+	return t;
+}
+
+void echo(void)
+{
+	int i = 0;
+	char t = '\0';
+
+        while(!(USART1->SR & (1<<5)));
+        t = USART1->DR;
+	/*printf("\n\r rx:%d \n", t);*/
+	
+        while(!(USART1->SR & (1 << 7))) ;
+        USART1->DR = t;
 }

@@ -44,5 +44,6 @@
 void uart_init(void);
 
 void uart_tx(char *t);
-
+char uart_rx(void);
+void echo(void);
 #endif

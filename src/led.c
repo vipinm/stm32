@@ -11,10 +11,10 @@ void led_init(void)
     uint32_t data =0;
 
      /* led at PB12 */
-    data = REG_GET(GPIOB->gpio_crh);
+    data = REG_GET(GPIOB->CRH);
     data &= (~(3 << 18));
     data |= (1 << 16);
-    data = REG_SET(GPIOB->gpio_crh, data);
+    data = REG_SET(GPIOB->CRH, data);
     while(1)
     {
         REG(GPIOB_ODR) ^= (1 << 12);

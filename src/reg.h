@@ -1,5 +1,7 @@
 #include<stdint.h>
 
+#define UART1 1
+
 #define RCC_BASE            0x40021000U
 
 #define GPIOA_BASE          0x40010800U
@@ -95,28 +97,28 @@
 #define REG_SET(x, data) x = data
 
 typedef struct {
-    uint32_t rcc_cr;
-    uint32_t rcc_cfgr;
-    uint32_t rcc_cir;
-    uint32_t rcc_apb2rstr;
-    uint32_t rcc_apb1rstr;
-    uint32_t rcc_ahbenr;
-    uint32_t rcc_apb2enr;
-    uint32_t rcc_apb1enr;
-    uint32_t rcc_bdcr;
-    uint32_t rcc_csr;
+    uint32_t CR;
+    uint32_t CFGR;
+    uint32_t CIR;
+    uint32_t APB2RSTR;
+    uint32_t APB1RSTR;
+    uint32_t AHBENR;
+    uint32_t APB2ENR;
+    uint32_t APB1ENR;
+    uint32_t BDCR;
+    uint32_t CSR;
 }rcc;
 
 #define RCC ((rcc *)(RCC_BASE))
 
 typedef struct{
-    uint32_t gpio_crl;
-    uint32_t gpio_crh;
-    uint32_t gpio_idr;
-    uint32_t gpio_odr;
-    uint32_t gpio_bsrr;
-    uint32_t gpio_brr;
-    uint32_t gpio_lckr;
+    uint32_t CRL;
+    uint32_t CRH;
+    uint32_t IDR;
+    uint32_t ODR;
+    uint32_t BSRR;
+    uint32_t BRR;
+    uint32_t LCKR;
 }gpio;
 
 #define GPIOA ((gpio *)(GPIOA_BASE))
@@ -135,14 +137,14 @@ typedef struct{
 
 
 typedef struct{
-    uint32_t usart_sr;
-    uint32_t usart_dr;
-    uint32_t usart_brr;
-    uint32_t usart_cr1;
-    uint32_t usart_cr2;
-    uint32_t usart_cr3;
-    uint32_t usart_gtpr;
+    uint32_t SR;
+    uint32_t DR;
+    uint32_t BRR;
+    uint32_t CR1;
+    uint32_t CR2;
+    uint32_t CR3;
+    uint32_t GTPR;
 }usart;
-#define USART1 ((usart *)(USART1_BASE))
+#define USART1 ((volatile usart *)(USART1_BASE))
 #define USART2 ((usart *)(USART2_BASE))
 #define USART3 ((usart *)(USART3_BASE))

@@ -107,8 +107,8 @@ return len;
 int _write( int handle, char* data, int size ) {
   int count = size;
   while( count-- ) {
-      while(!(REG_GET(USART1->usart_sr) & (1 << 6))) {};
-        USART1->usart_dr = *data++;
+      while(!(USART1->SR & (1 << 6))) {};
+        USART1->DR = *data++;
   }
   return size;
 }
