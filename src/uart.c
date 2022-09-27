@@ -35,7 +35,7 @@ void uart_init(void)
     USART1->CR1 = 0x00000000;
     USART1->CR2 = 0x00000000;
     USART1->CR1 |= ((1 << 13) | (1 << 3) | (1 << 2));
-    USART1->CR2 |= (1 << 11);/*CLKEN */
+    /*USART1->CR2 |= (1 << 11);*//*CLKEN */
  #if 0
     USART2->CR1 = 0x00000000;
     USART2->CR2 = 0x00000000;
@@ -72,12 +72,12 @@ char uart_rx(void)
 void echo(void)
 {
 	int i = 0;
-	char t = '\0';
+	unsigned char t = '\0';
 
-        while(!(USART1->SR & (1<<5)));
-        t = USART1->DR;
-	/*printf("\n\r rx:%d \n", t);*/
+        while((USART1->SR & (unsigned short)0x0020) == 0);
+        t = (USART1->DR & (unsigned short) 0x01FF);
+	//printf("\n\r rx:%d \n", t);
 	
-        while(!(USART1->SR & (1 << 7))) ;
-        USART1->DR = t;
+        while((USART1->SR & (unsigned short)0x0080) == 0) ;
+        USART1->DR = t & (unsigned short)0x01FF;
 }

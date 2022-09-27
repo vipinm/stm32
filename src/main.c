@@ -31,10 +31,18 @@ int main(void)
 }
 void rcc_init()
 {
+    RCC->APB2RSTR = 0x00000000;
+    RCC->APB1RSTR = 0x00000000;
+    RCC->AHBENR   = 0x00000000;
     RCC->APB2ENR = 0x00000000;
-    RCC->CFGR = 0x00000000;
+    RCC->APB1ENR = 0x00000000;
+    RCC->CFGR    &= 0xF8FF0000;
+    RCC->CR      &= 0xFEF6FFFF;
+    RCC->CR      &= 0xFFFBFFFF;
+    RCC->CFGR    &= 0xFF80FFFF;
+    RCC->CIR     &= 0x00000000;
 
-    RCC->CR      |= (1 << 0);/* HSION */
+    /*RCC->CR      |= (1 << 0);*//* HSION */
     RCC->CFGR    |= (5 << 24);/* Microcontroller clock output (HSI clck) */
     RCC->APB2ENR |= (1 << 14); /* USART1EN */
     RCC->APB1ENR |=((1 << 17)); /* USART2EN */
