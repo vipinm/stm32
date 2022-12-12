@@ -1,6 +1,3 @@
-#ifndef UART_H_
-#define UART_H_
-
 #define USART1_BASE      0x40013800
 #define USART2_BASE      0x40004400 
 #define USART3_BASE      0x40004800
@@ -43,7 +40,7 @@
 
 void uart_init(void);
 
-void uart_tx(char *t);
-char uart_rx(void);
+char getch();
+void putch(char t);
 void echo(void);
-#endif
+

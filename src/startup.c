@@ -1,6 +1,8 @@
 
 #include<stdio.h>
 #include<stdint.h>
+#include "reg.h"
+#include <debug.h>
 
 /* stm32f103c8t6 sram:20kb flash:64kb */
 #define SRAM_START  0x20000000U
@@ -8,6 +10,26 @@
 #define SRAM_END    ((SRAM_START) + (SRAM_SIZE))
 
 #define STACK_START   SRAM_END
+
+typedef struct __attribute__((packed)) ContextStateFrame {
+  uint32_t r0;
+  uint32_t r1;
+  uint32_t r2;
+  uint32_t r3;
+  uint32_t r4;
+  uint32_t r5;
+  uint32_t r6;
+  uint32_t r7;
+  uint32_t r8;
+  uint32_t r9;
+  uint32_t r10;
+  uint32_t r11;
+  uint32_t r12;
+  uint32_t r13;
+  uint32_t lr;
+  uint32_t pc;
+  uint32_t xpsr;
+} sContextStateFrame;
 
 extern uint32_t _etext;
 extern uint32_t _sdata;
@@ -21,6 +43,7 @@ int main(void);
 void __libc_init_array(void);
 
 void Reset_Handler(void);
+void DebugMon_Handler(void);
 
 void NMI_Handler 				(void) __attribute__ ((weak, alias("Default_Handler")));
 void HardFault_Handler 				(void) __attribute__ ((weak, alias("Default_Handler")));
@@ -28,7 +51,7 @@ void MemManage_Handler 				(void) __attribute__ ((weak, alias("Default_Handler")
 void BusFault_Handler 				(void) __attribute__ ((weak, alias("Default_Handler")));
 void UsageFault_Handler 			(void) __attribute__ ((weak, alias("Default_Handler")));
 void SVC_Handler 				(void) __attribute__ ((weak, alias("Default_Handler")));
-void DebugMon_Handler 				(void) __attribute__ ((weak, alias("Default_Handler")));
+//void DebugMon_Handler 				(void) __attribute__ ((weak, alias("Default_Handler")));
 void PendSV_Handler   				(void) __attribute__ ((weak, alias("Default_Handler")));
 void SysTick_Handler  				(void) __attribute__ ((weak, alias("Default_Handler")));
 void WWDG_IRQHandler 				(void) __attribute__ ((weak, alias("Default_Handler")));
@@ -224,6 +247,122 @@ void Reset_Handler(void)
 	}
         __libc_init_array();
         main();
+}
+
+
+#define BUFMAX 2048
+static const char hexchars[]="0123456789abcdef";
+static unsigned char remcomOutBuffer[BUFMAX];
+static char remcomInBuffer[BUFMAX];
+
+enum regnames {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, LR, PC, XPSR};
+
+static unsigned char *
+mem2hex (unsigned char *mem, unsigned char *buf, int count)
+{
+  unsigned char ch;
+
+  while (count-- > 0)
+    {
+      ch = *mem++;
+      *buf++ = hexchars[ch >> 4];
+      *buf++ = hexchars[ch & 0xf];
+    }
+
+  *buf = 0;
+
+  return buf;
+}
+
+void debug_monitor_handler_c(sContextStateFrame *frame) 
+{
+    const uint32_t dfsr_dwt_evt_bitmask = (1 << 2);
+    const uint32_t dfsr_bkpt_evt_bitmask = (1 << 1);
+    const uint32_t dfsr_halt_evt_bitmask = (1 << 0);
+
+    uint32_t is_dwt_dbg_evt =  (*(unsigned int *)DFSR & dfsr_dwt_evt_bitmask) ? 1:0;
+    uint32_t is_bkpt_dbg_evt = (*(unsigned int *)DFSR & dfsr_bkpt_evt_bitmask) ? 1: 0;
+    uint32_t is_halt_dbg_evt = (*(unsigned int *)DFSR & dfsr_halt_evt_bitmask) ? 1:0;
+    char *ptr;
+
+    printf("\r\nDebugMonitor Exception\n");
+    printf("DEMCR: 0x%08x", *(unsigned int *)DEMCR);
+    printf("DFSR:  0x%08x (bkpt=%d, halt=%d, dwt=%d)", *(unsigned int *)DFSR,
+              (int)is_bkpt_dbg_evt, (int)is_halt_dbg_evt,
+              (int)is_dwt_dbg_evt);
+
+    printf("\r\n Register Dump");
+    printf("\r\n r0  =0x%08x", frame->r0);
+    printf("\r\n r1  =0x%08x", frame->r1);
+    printf("\r\n r2  =0x%08x", frame->r2);
+    printf("\r\n r3  =0x%08x", frame->r3);
+    printf("\r\n r4  =0x%08x", frame->r4);
+    printf("\r\n r5  =0x%08x", frame->r5);
+    printf("\r\n r6  =0x%08x", frame->r6);
+    printf("\r\n r7  =0x%08x", frame->r7);
+    printf("\r\n r8  =0x%08x", frame->r8);
+    printf("\r\n r9  =0x%08x", frame->r9);
+    printf("\r\n r10  =0x%08x", frame->r10);
+    printf("\r\n r11  =0x%08x", frame->r11);
+    printf("\r\n r12  =0x%08x", frame->r12);
+    printf("\r\n r13 =0x%08x", frame->r13);
+    printf("\r\n lr  =0x%08x", frame->lr);
+    printf("\r\n pc  =0x%08x", frame->pc);
+    printf("\r\n xpsr=0x%08x", frame->xpsr);
+   
+
+    remcomOutBuffer[0] = 'S';
+    remcomOutBuffer[1] = '0';
+    remcomOutBuffer[2] = '5';
+    remcomOutBuffer[3]= 0;
+    putpacket(remcomOutBuffer);
+    while(1)
+    {
+        const uint16_t instruction = *(uint16_t*)frame->pc;
+	remcomOutBuffer[0] = 0;
+        if(is_bkpt_dbg_evt)
+        {
+	    ptr = getpacket();
+	    switch(*ptr)
+	    {
+                case '?':
+	            remcomOutBuffer[0] = 'S';
+	            remcomOutBuffer[1] = '0';
+	            remcomOutBuffer[2] = '5';
+	            remcomOutBuffer[3] = 0;
+		    break;
+		case 'g':
+                    mem2hex((unsigned char *)frame, remcomOutBuffer, 64);
+		    break;
+		default:
+		    break;
+	    }
+	    putpacket(remcomOutBuffer);
+            if ((instruction & 0xff00) == 0xbe00) 
+	    {
+              // advance past breakpoint instruction
+                frame->pc += sizeof(instruction);
+            } 
+           *(unsigned int*)DFSR = dfsr_bkpt_evt_bitmask;
+          /**(unsigned int*)DEMCR |=(1 << 18);*/
+        }
+	else if(is_halt_dbg_evt)
+        {
+          *(unsigned int*)DFSR = dfsr_halt_evt_bitmask;
+
+          *(unsigned int*)DEMCR &=~(1 << 18);
+        }
+    }
+}
+
+__attribute__((naked))
+void DebugMon_Handler(void) {
+  __asm volatile(
+      "tst lr, #4 \n"
+      "ite eq \n"
+      "mrseq r0, msp \n"
+      "mrsne r0, psp \n"
+      "b debug_monitor_handler_c \n");
 }
 
 
