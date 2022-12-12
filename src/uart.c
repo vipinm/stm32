@@ -44,40 +44,19 @@ void uart_init(void)
 #endif
 }
 
-void uart_tx(char *t)
+char getCh()
 {
-    //REG_SET(USART1->usart_sr, 0);
-    {
-/*
-	if(*t == '\n')
-	{
-            while(!(REG_GET(USART1->usart_sr) & (1 << 6))) {};
-            USART1->usart_dr = '\r';
-        }*/
-        while(!(USART1->SR & (1 << 6))) {};
-        USART1->DR = *t;
-	t++;
-    }
-
+        while((USART1->SR & (unsigned short)0x0020) == 0);
+        return (USART1->DR & (unsigned short) 0x01FF);
 }
-char uart_rx(void)
+
+void putCh(char t)
 {
-	char t = '\0';
-	while(!(USART1->SR & (1<<5))){};
-	t = USART1->DR;
-	printf("%c \r\n ", t);
-	return t;
+        while((USART1->SR & (unsigned short)0x0080) == 0) ;
+        USART1->DR = t & (unsigned short)0x01FF;
 }
 
 void echo(void)
 {
-	int i = 0;
-	unsigned char t = '\0';
-
-        while((USART1->SR & (unsigned short)0x0020) == 0);
-        t = (USART1->DR & (unsigned short) 0x01FF);
-	//printf("\n\r rx:%d \n", t);
-	
-        while((USART1->SR & (unsigned short)0x0080) == 0) ;
-        USART1->DR = t & (unsigned short)0x01FF;
+	putCh(getCh());
 }

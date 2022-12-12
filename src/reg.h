@@ -11,6 +11,9 @@
 #define GPIOE_BASE          0x40011800U
 #define NVIC_BASE           0xE000E100U
 #define AFIO_BASE           0x40010000U
+#define DHCSR               0xE000EDF0U
+#define DEMCR               0xE000EDFCU
+#define DFSR                0xE000ED30U
 
 #define RCC_CR_OFFSET       0x00U   // Control register for clock and reset control
 #define RCC_CFGR_OFFSET     0x04U   // Configuration register for clock and reset control
