@@ -14,7 +14,7 @@ LDFLAGS_SH= -mcpu=$(MACH) -mthumb -mfloat-abi=soft --specs=rdimon.specs -T stm32
 
 C_SRC  = ./src/main.c
 C_SRC += ./src/startup.c
-C_SRC += ./src/led.c
+#C_SRC += ./src/led.c
 C_SRC += ./src/uart.c
 C_SRC += ./src/syscalls.c
 C_SRC += ./src/debug.c

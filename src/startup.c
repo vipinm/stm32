@@ -333,6 +333,32 @@ hexToInt(char **ptr, int *intValue)
   return (numChars);
 }
 
+typedef struct {
+        volatile uint32_t CTRL;
+        volatile uint32_t REMAP;
+        volatile uint32_t COMP[6];
+}FPB_type;
+FPB_type *const FPB = (FPB_type *)0xE0002000;
+
+int breakpoint(unsigned int addr, int flag)
+{
+    static int num = 0;
+    unsigned int replace;
+    unsigned int fp_comp;
+
+    printf("\r\n FPB_CTRL : %d ", FPB->CTRL);
+    printf(" revision : %d ", ((FPB->CTRL >> 28) & 0xF));
+    printf(" num_code : %d \n", ((((FPB->CTRL >> 12) & 0x7) << 4) | ((FPB->CTRL >> 4) & 0xF)));
+
+    if(addr >= 0x20000000)
+        return -1;
+
+    FPB->CTRL |= 0x3;
+    replace = (addr & 2) == 0 ?1:2;
+    fp_comp = (replace << 30) | (addr & ~0x3) | ((flag == 1)? 1:0);
+    FPB->COMP[num] = fp_comp;
+    return 0;
+}
 
 void debug_monitor_handler_c(sContextStateFrame *frame) 
 {
@@ -344,7 +370,7 @@ void debug_monitor_handler_c(sContextStateFrame *frame)
     uint32_t is_bkpt_dbg_evt = (*(unsigned int *)DFSR & dfsr_bkpt_evt_bitmask) ? 1: 0;
     uint32_t is_halt_dbg_evt = (*(unsigned int *)DFSR & dfsr_halt_evt_bitmask) ? 1:0;
     char *ptr;
-
+#if 1
     printf("\r\nDebugMonitor Exception\n");
     printf("DEMCR: 0x%08x", *(unsigned int *)DEMCR);
     printf("DFSR:  0x%08x (bkpt=%d, halt=%d, dwt=%d)", *(unsigned int *)DFSR,
@@ -369,7 +395,7 @@ void debug_monitor_handler_c(sContextStateFrame *frame)
     printf("\r\n lr  =0x%08x", frame->lr);
     printf("\r\n pc  =0x%08x", frame->pc);
     printf("\r\n xpsr=0x%08x", frame->xpsr);
-   
+#endif
 
     remcomOutBuffer[0] = 'S';
     remcomOutBuffer[1] = '0';
@@ -409,6 +435,21 @@ void debug_monitor_handler_c(sContextStateFrame *frame)
 		    /*handlem(++ptr, &val, &len);
 		    mem2hex((unsigned char *)val, remcomOutBuffer, len);*/
 		    break;
+		case 'c':
+                    if (hexToInt(&ptr, &addr))
+                        frame->pc = addr;
+                    *(unsigned int*)DFSR |= dfsr_bkpt_evt_bitmask;
+		    return;
+		case 'Z':
+				/* add break point */
+		    if((*ptr++ = '1') && hexToInt(&ptr, &addr))
+		        breakpoint(addr,1);
+                    break;
+		case 'z':
+				/* remove break point */
+		    if((*ptr++ = '1') && hexToInt(&ptr, &addr))
+		        breakpoint(addr,0);
+                    break;
 		default:
 		    break;
 	    }
@@ -424,8 +465,6 @@ void debug_monitor_handler_c(sContextStateFrame *frame)
 	else if(is_halt_dbg_evt)
         {
           *(unsigned int*)DFSR = dfsr_halt_evt_bitmask;
-
-          *(unsigned int*)DEMCR &=~(1 << 18);
         }
     }
 }

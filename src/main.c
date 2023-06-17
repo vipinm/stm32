@@ -4,13 +4,15 @@
 #include "led.h"
 #include "uart.h"
 
+#define LOG printf
+
 typedef struct {
 	volatile uint32_t CTRL;
 	volatile uint32_t REMAP;
 	volatile uint32_t COMP[3];
 }FPB_type;
 
-FPB_type *const FPB = (FPB_type *)0xE0002000;
+/*FPB_type *const FPB = (FPB_type *)0xE0002000;*/
 void rcc_init(void);
 int debug_enable(void);
 static int prv_issue_breakpoint(void);
@@ -21,13 +23,10 @@ int main(void)
     char *t;
     rcc_init();
     uart_init();
-    printf(" \r\n***************************************************************** \n");
-    printf(" \r\n*               Cortex M3 SDK   V 0.0                           * \n");
-    printf(" \r\n***************************************************************** \n");
+    LOG(" \r\n***************************************************************** \n");
+    LOG(" \r\n*               Cortex M3 SDK   V 0.0                           * \n");
+    LOG(" \r\n***************************************************************** \n");
 
-    printf("\r\n FPB_CTRL : %d ", FPB->CTRL);
-    printf(" revision : %d ", ((FPB->CTRL >> 28) & 0xF));
-    printf(" num_code : %d \n", ((((FPB->CTRL >> 12) & 0x7) << 4) | ((FPB->CTRL >> 4) & 0xF)));
 
     debug_enable();
 
@@ -38,9 +37,9 @@ int main(void)
     printf("DEbug test done 3\n");
     printf("DEbug test done 4\n");
     printf("DEbug test done 5\n");
-#if 0
+#if 1
     /*led_init();*/
-/*    while(1)*/
+    while(1)
     {
 	int i = 0;
 	t = getpacket();
@@ -52,24 +51,25 @@ int main(void)
 }
 int debug_enable(void)
 {
-	volatile uint32_t *shpr3 = (uint32_t *)0xE000ED20;
+    volatile uint32_t *shpr3 = (uint32_t *)0xE000ED20;
 
-	printf("\r\n Enabling Debug :\n");
-	if(*(unsigned int*)DHCSR & 0x1)
-        {
-		printf(" \r\n Halting Debug Enabled : \n");
-		printf(" \r\n Cant enable monitor mode debug \n");
-		return -1;
+    printf("\r\n Enabling Debug :\n");
+    if(*(unsigned int*)DHCSR & 0x1)
+    {
+        printf(" \r\n Halting Debug Enabled : \n");
+	printf(" \r\n Cant enable monitor mode debug \n");
+	return -1;
 
-	}
-        printf("\r\n DEMCR  : 0x%x \r\n", *(unsigned int *)DEMCR);
-	*(unsigned int*)DEMCR = 0x00010000;
-        printf("\r\n DEMCR  : 0x%x \r\n", *(unsigned int *)DEMCR);
+    }
+    printf("\r\n DEMCR  : 0x%x \r\n", *(unsigned int *)DEMCR);
+    *(unsigned int*)DEMCR = 0x00010000;
+    printf("\r\n DEMCR  : 0x%x \r\n", *(unsigned int *)DEMCR);
 
-        *shpr3 = 0xff;
+    *shpr3 = 0xff;
 
-        printf("Monitor Mode Debug Enabled!");
-        return 0;
+    printf("Monitor Mode Debug Enabled!");
+
+    return 0;
 }
 #if 0
 static char buffer[100];
@@ -77,7 +77,7 @@ static char buffer[100];
 unsigned short hex2dec(char t)
 {
 	if(t >= 'a' && t <= 'f') 
-	    return ((t - 'a') + 10); 
+	    	return ((t - 'a') + 10); 
         else if(t >= 'A' && t <= 'F')
 	    return ((t - 'A') + 10);
 	else
