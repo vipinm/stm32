@@ -35,4 +35,9 @@
 
 #define INTERRUPT_ENABLE()  do{__asm volatile ("MOV R0,#0x0"); asm volatile("MSR PRIMASK,R0"); } while(0)
 
+#define LOG printf
+
+void rcc_init(void);
+int debug_enable(void);
+
 #endif /* MAIN_H_ */

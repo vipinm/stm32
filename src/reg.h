@@ -40,6 +40,8 @@
 #define USART_CR3_OFFSET  0x14 /* Control register 3 */
 #define USART_GTPR_OFFSET 0x18 /* Guard time and prescaler register */
 
+#define FPB_BASE          0xE0002000
+
 #define RCC_CR          (RCC_BASE + RCC_CR_OFFSET)
 #define RCC_CFGR        (RCC_BASE + RCC_CFGR_OFFSET)
 #define RCC_APB2ENR     (RCC_BASE + RCC_APB2ENR_OFFSET)
@@ -148,6 +150,16 @@ typedef struct{
     uint32_t CR3;
     uint32_t GTPR;
 }usart;
+
 #define USART1 ((volatile usart *)(USART1_BASE))
 #define USART2 ((usart *)(USART2_BASE))
 #define USART3 ((usart *)(USART3_BASE))
+
+typedef struct {
+	volatile uint32_t CTRL;
+	volatile uint32_t REMAP;
+	volatile uint32_t COMP[3];
+}FPB_type;
+
+#define FPB (FPB_type *)(FBP_BASE);
+

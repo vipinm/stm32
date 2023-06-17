@@ -1,4 +1,3 @@
-TARGET = final
 OC = arm-none-eabi-objcopy
 CC = arm-none-eabi-gcc
 OS = arm-none-eabi-size
@@ -14,7 +13,7 @@ LDFLAGS_SH= -mcpu=$(MACH) -mthumb -mfloat-abi=soft --specs=rdimon.specs -T stm32
 
 C_SRC  = ./src/main.c
 C_SRC += ./src/startup.c
-C_SRC += ./src/led.c
+#C_SRC += ./src/led.c
 C_SRC += ./src/uart.c
 C_SRC += ./src/syscalls.c
 C_SRC += ./src/debug.c
@@ -25,14 +24,20 @@ OBJDIR = ./src
 
 OBJS  = $(C_SRC:.c=.o)
 
+.PHONY: semi
+semi: $(TARGET)_sh.elf
+
 .PHONY: all
 all: $(TARGET).bin
 
 %.o : %.c
-	@echo Compiling $<
+	@echo Compiling file $<
 	$(CC) -c $(CFLAGS) $(INCLUDE) $< -o $@
 
 $(TARGET).elf: $(OBJS)
+	$(CC) $^ $(LDFLAGS) -o $@
+
+$(TARGET)_sh.elf: $(OBJS)
 	$(CC) $^ $(LDFLAGS) -o $@
 
 $(TARGET).bin: $(TARGET).elf
