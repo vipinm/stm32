@@ -4,6 +4,17 @@
 #include "led.h"
 #include "uart.h"
 
+#define LOG printf
+
+typedef struct {
+	volatile uint32_t CTRL;
+	volatile uint32_t REMAP;
+	volatile uint32_t COMP[3];
+}FPB_type;
+
+/*FPB_type *const FPB = (FPB_type *)0xE0002000;*/
+void rcc_init(void);
+int debug_enable(void);
 static int prv_issue_breakpoint(void);
 int global_test = 10;
 char * getpacket();
